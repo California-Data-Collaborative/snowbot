@@ -1,5 +1,7 @@
-# real-time-SWE
+# Snowbot
 Providing automated, real time estimates of snow water equivalent in the Sierras and beyond
+
+![Snowbot](/img/snowbot2.png)
 
 Tasks:
 
