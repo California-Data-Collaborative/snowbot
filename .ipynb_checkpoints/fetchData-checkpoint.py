@@ -64,14 +64,23 @@ def updateHistorical(sens=3, start_date=first_date, end_date=today):
     if os.path.exists(f"data/{fnameRaw}"):
         os.remove(f"data/{fnameRaw}")
     
-def getHistorical(sens='03', prefix='backup'):
+def getLastFiles(sens='03', prefix='backup'):
     file = max([i for i in listAll() if re.match(r'%s.*\%s.csv'%(prefix, sens))])
     s3.resource.Object(bucket, f"data/{file}").download_file(filename=f'data/{file}')
     
 def processRaw(filename):
     df = pd.read_csv(filename)
+    for st in stationIDs:
+        tmp = df[df.ID==st]
     
-    
-def dailyUpdate():
-    updateHistorical(3)     # daily snow water content
-    updateHistorical(30)    # daily temperature
+def dailyUpdate(sens=3):
+    try:
+        updateHistorical(sens)     # daily snow water content
+    except:
+        try:
+            getLastFiles(f'{sens:02}', 'backup')
+        except:
+            getLastFiles(f'{sens:02}', 'raw')
+            filename=max(os.listdir('data/raw*'))
+            processRaw(filename)
+            
