@@ -20,6 +20,7 @@ def daily_collection(main_df):
     sensor_number='82'
 
 	for station in station_name_dataframe['ID'].values.tolist():
+        
         sensor_url = 'http://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations=' + station + '&SensorNums=' + sensor_number +'&dur_code=D&Start='+ today +'&End=' + today
         
         # read the url contents and redirect it to station files

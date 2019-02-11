@@ -36,8 +36,15 @@ def kriging_per_row(all_data_daily_slice):
   for index,row_under_observation in all_data_daily_slice.iterrows():
     
     
+    
+    
+    
+ 
     row_under_observation = pd.DataFrame(row_under_observation)
     
+    
+   
+  
   
   #drop the date column:
     transposed_row = row_under_observation.T
@@ -49,8 +56,6 @@ def kriging_per_row(all_data_daily_slice):
   #same unit uniformity
     snow_amt_with_locn['snow_adj_mters'] = snow_amt_with_locn['snow_adj_inches'] * 0.0254
   
-
-
   #containing non null values
     snow_amt_with_locn_notnull = snow_amt_with_locn.dropna()
     #print(snow_amt_with_locn_notnull.shape)
@@ -168,8 +173,6 @@ def kriging_per_row(all_data_daily_slice):
     
     
     interpolated_values.to_csv('f12k.csv')
-    return()
-    
 
   
   
