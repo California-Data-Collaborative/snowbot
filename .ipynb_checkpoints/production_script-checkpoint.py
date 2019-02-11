@@ -178,7 +178,13 @@ def vis1(train, train_preds, test, test_preds, predict, predict_preds, y_train, 
     ax.text('1984-1-1', 37, "RMSE of the train set: {}".format(round(train_rmse, 4)))
     ax.text('1984-1-1', 35, "RMSE of the test set: {}".format(round(test_rmse, 4)))
 
-    plt.savefig('SWE Time Series.png')
+	font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 14}
+
+	plt.rc('font', **font)
+
+    plt.savefig('SWE Time Series {}.png'.format(datetime.datetime.now().strftime("%Y-%m-%d")))
 
     return train_graph, test_graph, pred_graph
 
@@ -206,7 +212,7 @@ def vis2(train, test, predict, train_preds, test_preds, predict_preds, y_train, 
 
     # scatter plot to show comparison of predicted vs actual on the training and test data sets
 
-    fig = plt.figure(figsize=(15, 10))
+    fig = plt.figure(figsize=(15, 15))
     ax = fig.add_subplot(122)
 
     ax.scatter(y_test['vol'], test_graph[0], color='b')
@@ -228,7 +234,13 @@ def vis2(train, test, predict, train_preds, test_preds, predict_preds, y_train, 
     ax1.annotate("Train correlation: {}".format(round(y_train['vol'].corr(train_graph[0]), 3),
                                                 xy=(1, 28), xytext=(0, 37.5)))
 
-    plt.savefig("SWE Correlation Plots.png")
+    font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 10}
+
+	plt.rc('font', **font)
+
+	plt.savefig("SWE Correlation Plots {}.png".format(datetime.datetime.now().strftime("%Y-%m-%d")))
 
 
 def vis3(train, test, predict, train_preds, test_preds, predict_preds, y_train, y_test):
@@ -274,8 +286,8 @@ def vis3(train, test, predict, train_preds, test_preds, predict_preds, y_train, 
 
     # calculate water day from calendar day
 
-    avg_swe_series['water_day'] = [x - 273 if x > 273 else x + 92 for x in avg_swe_series['doy']]
-    select_year_series['water_day'] = [x - 273 if x > 273 else x + 92 for x in select_year_series['doy']]
+    avg_swe_series['water_day'] = [x - 273 if x >= 273 else x + 92 for x in avg_swe_series['doy']]
+    select_year_series['water_day'] = [x - 273 if x >= 273 else x + 92 for x in select_year_series['doy']]
 
     avg_swe_series = avg_swe_series.iloc[:, 1:]
     select_year_series = select_year_series.iloc[:, 1:]
@@ -295,33 +307,52 @@ def vis3(train, test, predict, train_preds, test_preds, predict_preds, y_train, 
     pred_series['year'] = pred_series['date'].dt.year
     pred_series['doy'] = pred_series['date'].dt.dayofyear
 
-    pred_series['water_day'] = [x - 273 if x > 273 else x + 92 for x in pred_series['doy']]
+    pred_series['water_day'] = [x - 273 if x >= 273 else x + 92 for x in pred_series['doy']]
 
     pred_series = pred_series[['water_day', 0]]
 
-    fig = plt.figure(figsize=(25, 8))
-    ax = fig.add_subplot(111)
+	#get day level standard deviation
+	total_swe['water_day'] = [x-273 if x >= 273 else x+92 for x in total_swe['doy']]
 
-    ax.plot(actuals_series['water_day'], actuals_series['vol_x'], color='c', label='1990-91 Water Year', linewidth=3)
-    ax.plot(actuals_series['water_day'], actuals_series['vol_y'], color='b', linestyle='--', alpha=0.5,
-            label='1984-2016 Avg. Water Year', linewidth=3)
-    ax.plot(pred_series['water_day'], pred_series[0], color='g', label='2018-19 Water Year Forecast', linewidth=3)
+	swe_agg = total_swe.groupby('water_day')['vol'].agg(['mean','std'])
 
-    ax.set_xlabel("Day of the Water Year")
-    ax.set_ylabel("Sierra Nevada Total Storage [km3]")
-    ax.set_title("SWE Daily Estimate Comparison")
-    ax.set_ylim(-1, 30)
-    ax.set_xlim(0, 365)
+	#get upper and lower standard deviation bounds
+	swe_agg['std_upper'] = swe_agg['mean'] + swe_agg['std']
+	swe_agg['std_lower'] =  swe_agg['mean'] - swe_agg['std']
 
-    plt.fill_between(actuals_series['water_day'], actuals_series['std_lower'], actuals_series['std_upper'],
-                     facecolor='lightgray', label='1984-2016 +/- 1 std.')
+	#resent index so I can use water day in the charting
+	swe_agg.reset_index(inplace=True)
 
-    plt.legend()
 
-    ax.annotate("Updated as of: {}".format(datetime.datetime.now().strftime("%Y-%m-%d")), xy=(1, 28), xytext=(1.5, 28))
-    ax.annotate("Today's Forecast: {} [km3]".format(pred_series[0].iloc[-1:].values), xy=(1, 28), xytext=(1.5, 26))
+	fig = plt.figure(figsize=(20,10))
+	ax = fig.add_subplot(111)
 
-    plt.savefig("Daily Water Year Graph.png")
+	ax.plot(actuals_series['water_day'],actuals_series['vol_x'],color='c',label='1990-91 Water Year',linewidth=3)
+	ax.plot(actuals_series['water_day'],actuals_series['vol_y'],color='b',linestyle='--',alpha=0.5,label='1984-2016 Avg. Water Year',linewidth=3)
+	ax.plot(pred_series['water_day'],pred_series[0],color='g',label='2018-19 Water Year Forecast',linewidth=3)
+
+	ax.set_xlabel("Day of the Water Year")
+	ax.set_ylabel("Sierra Nevada Total Storage [km3]")
+	ax.set_title("SWE Daily Estimate Comparison")
+	ax.set_ylim(0.15,30)
+	ax.set_xlim(0,365)
+
+	plt.fill_between(swe_agg['water_day'],swe_agg['std_lower'], swe_agg['std_upper'], facecolor='lightgray',label='1984-2016 +/- 1 std.')
+
+
+	plt.legend()
+
+	ax.annotate("Updated as of: {}".format(datetime.datetime.now().strftime("%Y-%m-%d")),xy=(1, 28), xytext=(1.5, 28))
+	ax.annotate("Today's Forecast: {} [km3]".format(pred_series[0].iloc[-1:].values),xy=(1, 28), xytext=(1.5, 26))
+
+	font = {'family' : 'normal',
+			'weight' : 'bold',
+			'size'   : 16}
+
+	plt.text(0.05,-5,"Comment: Today's forecast is {}% of the historical average".format((pred_series[0].iloc[-1:].values / actuals_series['vol_y'][len(pred_series) -1]) * 100))
+	plt.rc('font', **font)
+
+	plt.savefig("Daily Water Year Graph_{}.png".format(datetime.datetime.now().strftime("%Y-%m-%d")))
 
 
 url_path = 'https://s3-us-west-2.amazonaws.com/cawater-public/swe/pred_SWE.txt'
@@ -331,7 +362,7 @@ file = 'fulldataset.csv'
 xgb_pickle = "swe_xgb.pickle.dat"
 
 
-def production_job():
+def production_job(url_path=url_path,file=file,xgb_pickle=xgb_pickle):
 
     swe_vol = read_swe(url_path)
     station = read_file(file)
@@ -346,8 +377,8 @@ def production_job():
     vis3(y_train, y_test, pred_graph)
 
 
-schedule.every().day.at("10:30").do(model)
+# schedule.every().day.at("10:30").do(model)
 
-while True:
-        schedule.run_pending()
-        time.sleep(1)
+# while True:
+#         schedule.run_pending()
+#         time.sleep(1)

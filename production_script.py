@@ -377,8 +377,8 @@ def production_job(url_path=url_path,file=file,xgb_pickle=xgb_pickle):
     vis3(y_train, y_test, pred_graph)
 
 
-schedule.every().day.at("10:30").do(model)
+# schedule.every().day.at("10:30").do(model)
 
-while True:
-        schedule.run_pending()
-        time.sleep(1)
+# while True:
+#         schedule.run_pending()
+#         time.sleep(1)
